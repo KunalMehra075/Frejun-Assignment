@@ -6,3 +6,5 @@ drf-yasg==1.21.7
 pytest==8.0.0
 pytest-django==4.8.0 
 setuptools==69.0.2
+whitenoise==6.9.0
+gunicorn==21.2.0
