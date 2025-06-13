@@ -11,6 +11,10 @@ Username: admin
 Password: admin
 ```
 
+## Demo Video: -
+
+Please check out the demo for this API here: <a href="https://www.youtube.com/watch?v=4PZ_LEmEWJk">Demo Video Link</a>
+
 ## Features
 
 - Book rooms (Private, Conference, Shared Desks)
