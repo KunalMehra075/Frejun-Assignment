@@ -10,6 +10,7 @@ info:
     - Check room availability
     - Support for team bookings
     - Time slot management (9 AM - 6 PM)
+    - User management
   version: 1.0.0
   contact:
     email: contact@example.com
@@ -38,6 +39,9 @@ components:
         - name
         - age
       properties:
+        id:
+          type: integer
+          description: Unique identifier for the user
         name:
           type: string
           description: Full name of the user
@@ -176,6 +180,65 @@ paths:
                     type: string
         "400":
           description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/users:
+    get:
+      summary: List all users
+      description: Retrieve a paginated list of all users. Only accessible by managers and administrators.
+      security:
+        - Token: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+          description: Page number
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+          description: Number of items per page
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: Total number of items
+                  next:
+                    type: string
+                    nullable: true
+                    description: URL for the next page
+                  previous:
+                    type: string
+                    nullable: true
+                    description: URL for the previous page
+                  results:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/User"
+                    description: List of users for the current page
+        "401":
+          description: Authentication credentials were not provided
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Permission denied
           content:
             application/json:
               schema:

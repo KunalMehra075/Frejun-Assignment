@@ -2,6 +2,8 @@
 
 A RESTful API for managing workspace room bookings, cancellations, and availability in a shared office setup.
 
+##### NOTE: `: Please read the openapi.yml file in a swagger viewer to see better api documentation.`
+
 ## Testing
 
 ```
