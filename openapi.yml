@@ -1,0 +1,378 @@
+openapi: 3.0.0
+info:
+  title: Room Booking API
+  description: |
+    API for managing workspace room bookings, cancellations, and availability in a shared office setup.
+    Features include:
+    - Book rooms (Private, Conference, Shared Desks)
+    - Cancel bookings
+    - View all bookings
+    - Check room availability
+    - Support for team bookings
+    - Time slot management (9 AM - 6 PM)
+  version: 1.0.0
+  contact:
+    email: contact@example.com
+  license:
+    name: BSD License
+    url: https://opensource.org/licenses/BSD-3-Clause
+
+servers:
+  - url: https://frejun-assignment.onrender.com
+    description: Production server
+  - url: http://localhost:8000
+    description: Local development server
+
+components:
+  securitySchemes:
+    Token:
+      type: apiKey
+      name: Authorization
+      in: header
+      description: Token-based authentication
+
+  schemas:
+    User:
+      type: object
+      required:
+        - name
+        - age
+      properties:
+        name:
+          type: string
+          description: Full name of the user
+        age:
+          type: integer
+          description: Age of the user
+          minimum: 0
+        gender:
+          type: string
+          description: Gender of the user
+          enum: [MALE, FEMALE, OTHER]
+
+    TeamMember:
+      type: object
+      required:
+        - name
+        - age
+      properties:
+        name:
+          type: string
+          description: Full name of the team member
+        age:
+          type: integer
+          description: Age of the team member
+          minimum: 0
+        gender:
+          type: string
+          description: Gender of the team member
+          enum: [MALE, FEMALE, OTHER]
+
+    Team:
+      type: object
+      required:
+        - name
+        - members
+      properties:
+        name:
+          type: string
+          description: Name of the team
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/TeamMember"
+          minItems: 1
+          description: List of team members
+
+    Room:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the room
+        room_number:
+          type: string
+          description: Room number or identifier
+        room_type:
+          type: string
+          enum: [PRIVATE, CONFERENCE, SHARED]
+          description: Type of the room
+        capacity:
+          type: integer
+          description: Maximum capacity of the room
+          minimum: 1
+
+    Booking:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the booking
+        room:
+          $ref: "#/components/schemas/Room"
+        user:
+          $ref: "#/components/schemas/User"
+        team:
+          $ref: "#/components/schemas/Team"
+        start_time:
+          type: string
+          format: date-time
+          description: Start time of the booking
+        end_time:
+          type: string
+          format: date-time
+          description: End time of the booking
+        booking_type:
+          type: string
+          enum: [INDIVIDUAL, TEAM]
+          description: Type of booking
+        status:
+          type: string
+          enum: [ACTIVE, CANCELLED]
+          description: Current status of the booking
+        created_at:
+          type: string
+          format: date-time
+          description: When the booking was created
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+        details:
+          type: object
+          description: Additional error details
+
+paths:
+  /auth-token:
+    post:
+      summary: Obtain authentication token
+      description: Get an authentication token for API access
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Token obtained successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        "400":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/bookings:
+    get:
+      summary: List all bookings
+      description: Retrieve a paginated list of all bookings
+      security:
+        - Token: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [cancelled]
+          description: Filter bookings by status
+      responses:
+        "200":
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  next:
+                    type: string
+                    nullable: true
+                  previous:
+                    type: string
+                    nullable: true
+                  results:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Booking"
+        "401":
+          description: Authentication credentials were not provided
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    post:
+      summary: Create a new booking
+      description: Book a room for a user or team
+      security:
+        - Token: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              oneOf:
+                - required:
+                    - user
+                    - room_type
+                    - slot
+                  properties:
+                    user:
+                      $ref: "#/components/schemas/User"
+                    room_type:
+                      type: string
+                      enum: [PRIVATE, CONFERENCE, SHARED]
+                    slot:
+                      type: string
+                      format: date-time
+                - required:
+                    - team
+                    - room_type
+                    - slot
+                  properties:
+                    team:
+                      $ref: "#/components/schemas/Team"
+                    room_type:
+                      type: string
+                      enum: [PRIVATE, CONFERENCE, SHARED]
+                    slot:
+                      type: string
+                      format: date-time
+      responses:
+        "201":
+          description: Booking created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  booking_id:
+                    type: integer
+                  room:
+                    type: string
+        "400":
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication credentials were not provided
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/cancel/{booking_id}:
+    post:
+      summary: Cancel a booking
+      description: Cancel an active booking by its ID
+      security:
+        - Token: []
+      parameters:
+        - name: booking_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the booking to cancel
+      responses:
+        "200":
+          description: Booking cancelled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "404":
+          description: Booking not found or already cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication credentials were not provided
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/rooms:
+    get:
+      summary: Get currently booked rooms
+      description: Retrieve a list of all currently occupied rooms
+      security:
+        - Token: []
+      responses:
+        "200":
+          description: List of currently booked rooms
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Room"
+        "401":
+          description: Authentication credentials were not provided
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/rooms/available:
+    get:
+      summary: Check room availability
+      description: Check available rooms for a specific time slot and room type
+      parameters:
+        - name: room_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [PRIVATE, CONFERENCE, SHARED]
+          description: Type of room to check
+        - name: slot
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: Time slot to check (ISO 8601 format)
+      responses:
+        "200":
+          description: List of available rooms
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Room"
+        "400":
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"

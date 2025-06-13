@@ -27,7 +27,7 @@ schema_view = get_schema_view(
     openapi.Info(
         title="Room Booking API",
         default_version='v1',
-        description="API for managing workspace room bookings",
+        description="API for managing workspace room bookings, cancellations, and availability in a shared office setup.",
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
@@ -40,6 +40,7 @@ urlpatterns = [
     path('api/v1/bookings/', include('bookings.urls')),
     path('api/v1/rooms/', include('rooms.urls')),
     
+    # Documentation URLs
     path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]

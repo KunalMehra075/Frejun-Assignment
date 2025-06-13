@@ -2,6 +2,13 @@
 
 A RESTful API for managing workspace room bookings, cancellations, and availability in a shared office setup.
 
+## Testing
+
+```
+Username: admin
+Password: admin
+```
+
 ## Features
 
 - Book rooms (Private, Conference, Shared Desks)
